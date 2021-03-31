@@ -99,8 +99,7 @@ NSString * const kCTMediatorParamsKeySwiftTargetModuleName = @"kCTMediatorParams
     
     if (target == nil) {
         // 这里是处理无响应请求的地方之一，这个demo做得比较简单，如果没有可以响应的target，就直接return了。实际开发过程中是可以事先给一个固定的target专门用于在这个时候顶上，然后处理这种请求的
-        [self NoTargetActionResponseWithTargetString:targetClassString selectorString:actionString originParams:params];
-        return nil;
+        return [self NoTargetActionResponseWithTargetString:targetClassString selectorString:actionString originParams:params];
     }
     
     if (shouldCacheTarget) {
@@ -115,12 +114,11 @@ NSString * const kCTMediatorParamsKeySwiftTargetModuleName = @"kCTMediatorParams
         if ([target respondsToSelector:action]) {
             return [self safePerformAction:action target:target params:params];
         } else {
-            // 这里也是处理无响应请求的地方，在notFound都没有的时候，这个demo是直接return了。实际开发过程中，可以用前面提到的固定的target顶上的。
-            [self NoTargetActionResponseWithTargetString:targetClassString selectorString:actionString originParams:params];
             @synchronized (self) {
                 [self.cachedTarget removeObjectForKey:targetClassString];
             }
-            return nil;
+            // 这里也是处理无响应请求的地方，在notFound都没有的时候，这个demo是直接return了。实际开发过程中，可以用前面提到的固定的target顶上的。
+            return [self NoTargetActionResponseWithTargetString:targetClassString selectorString:actionString originParams:params];
         }
     }
 }
@@ -139,7 +137,7 @@ NSString * const kCTMediatorParamsKeySwiftTargetModuleName = @"kCTMediatorParams
 }
 
 #pragma mark - private methods
-- (void)NoTargetActionResponseWithTargetString:(NSString *)targetString selectorString:(NSString *)selectorString originParams:(NSDictionary *)originParams
+- (id)NoTargetActionResponseWithTargetString:(NSString *)targetString selectorString:(NSString *)selectorString originParams:(NSDictionary *)originParams
 {
     SEL action = NSSelectorFromString(@"Action_response:");
     NSObject *target = [[NSClassFromString(@"Target_NoTargetAction") alloc] init];
@@ -149,7 +147,7 @@ NSString * const kCTMediatorParamsKeySwiftTargetModuleName = @"kCTMediatorParams
     params[@"targetString"] = targetString;
     params[@"selectorString"] = selectorString;
     
-    [self safePerformAction:action target:target params:params];
+    return [self safePerformAction:action target:target params:params];
 }
 
 - (id)safePerformAction:(SEL)action target:(NSObject *)target params:(NSDictionary *)params
